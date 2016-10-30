@@ -1,7 +1,17 @@
 // Reference: N3776
 
+{
+  function makeList(head, tail, index) {
+    return [head].concat(
+      tail.map(result => result[index])
+    );
+  }
+
+  function ok(x) { return !!x; }
+}
+
 start
-  = a:Statement _ { return a; }
+  = StatementList
 
 Whitespace
   = "\t"
@@ -14,6 +24,9 @@ LineTerminator
 // Skip whitespace.
 _
   = skip:(Whitespace / LineTerminator)* { return ''; }
+
+Comma
+  = _ "," _
 
 // Reusable types before specific types...
 
@@ -55,7 +68,7 @@ Digit
 
 
 Identifier
-  = IdentifierNonDigit IdentifierPart* { return new Identifier(text()); }
+  = IdentifierNonDigit IdentifierPart* { return text(); }
 
 IdentifierPart
   = [a-zA-Z_0-9]
@@ -82,11 +95,12 @@ ExpressionStatement
 
 DeclarationStatement
   = SimpleDeclaration
+  / FunctionDeclaration  // Hack.
 
 SimpleDeclaration
   = a:DeclSpecifierSeq? _ b:InitDeclaratorList? ";" {
-    return new DeclarationStatement(a, b);
-  }
+        return new DeclarationStatement(a, b);
+      }
 
 DeclSpecifierSeq
   = a:DeclSpecifier _ b:DeclSpecifierSeq { return [a].concat(b); }
@@ -130,3 +144,27 @@ InitializerClause
 
 AssignmentExpression
   = PrimaryExpression
+
+// Simplified function syntax as a hack to get things started.
+FunctionDeclaration
+  = type:SimpleTypeSpecifier _ identifier:Identifier _
+      "(" _ parameters:ParameterList? _ ")" _
+      "{" _ body:FunctionBody _ "}" {
+        return {body: body, parameters: parameters};
+      }
+
+ParameterList
+  = a:Parameter b:(Comma Parameter)* { return makeList(a, b, 1); }
+
+Parameter
+  = type:SimpleTypeSpecifier _ name:Identifier {
+        return new Parameter(type, name);
+      }
+
+StatementList
+  = statements:(Statement _)* {
+        return statements.map(s => s[0]).filter(ok);
+    }
+
+FunctionBody
+  = StatementList

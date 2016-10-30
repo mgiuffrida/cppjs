@@ -2,10 +2,10 @@
 
 var g = {};
 
-function assert(cond) {
+function assert(cond, opt_msg) {
   if (cond)
     return;
-  throw new Error('Assertion failure!');
+  throw new Error(opt_msg || 'Assertion failure!');
 }
 
 /** @enum {symbol} */
@@ -15,6 +15,10 @@ var Keyword = {
 
 // Implementation-defined parameters:
 var SIZEOF_INT = 4;
+
+// Machine specifics:
+// Endianness is platformt specific due to JS typed array implementation.
+
 // ...
 // See 1.9 Program execution for more.
 
@@ -77,13 +81,15 @@ BooleanType.BOOL = new BooleanType('bool', 1);
 
 // ====Lexical conventions====
 
+/*
 class Identifier {
-  constructor(identifier) {
-    assert(identifier.length);
-    assert(identifier[0] < '0' || identifier[0] > '9');
-    this.identifier = identifier;
+  constructor(name) {
+    assert(name.length);
+    assert(name[0] < '0' || name[0] > '9');
+    this.name = name;
   }
 }
+*/
 
 // Not a parser or compiler unit, just an abstract idea: a Literal specifies a
 // type and a value.
@@ -126,7 +132,7 @@ class ParenExpression {
 }
 
 class UnqualifiedId {
-  /** @param {Identifier} identifier */
+  /** @param {string} identifier */
   constructor(identifier) {
     this.identifier = identifier;
   }
@@ -332,48 +338,136 @@ class Initializer {
 }
 
 class Declarator {
-  constructor(declarator, opt_initializer) {
-    this.declarator = declarator;
+  constructor(identifier, opt_initializer) {
+    this.identifier = identifier;
     this.initializer = opt_initializer || null;
   }
 }
 
-// Translation unit.
-class TranslationUnit {
-  constructor() {
-    this.decls = [];
-  }
-  push(decl) {
-    this.decls.push(decl);
+class Parameter {
+  constructor(type, name) {
+    this.type = type;
+    this.name = name;
   }
 }
 
-(function() {
-  /** @return {TranslationUnit} */
-  function getFakeTU() {
-    var u = new TranslationUnit;
-    u.push(
-        new IfStatement(
-          new Condition(
-            new PrimaryExpression(
-              new Literal(BooleanType.BOOL, true))),
-          new ExpressionStatement(
-            new PrimaryExpression(
-              new Literal(IntegralType.INT, 12)))));
-    u.push(
-        new ExpressionStatement(
-          new PrimaryExpression(
-            new Literal(BooleanType.BOOL, false))));
-    return u;
+class FunctionDeclaration {
+  constructor(type, name, parameters, body) {
+    this.type = type;
+    this.name = name;
+    this.parameters = parameters;
+    this.body = body;
+  }
+}
+
+
+
+// program types
+
+class Declaration {
+  /**
+   * @param {!string} id
+   * @param {!Type} type
+   * @param {!StorageClass=} opt_storageClass
+   * @param {!Initializer=} opt_initializer
+   */
+  constructor(id, type, opt_storageClass, opt_initializer) {
+    this.id = id;
+    this.type = type;
+    this.storageClass =
+        (opt_storageClass === undefined ? undefined : opt_storageClass);
+    this.initializer =
+        (opt_initializer === undefined ? undefined : opt_initializer);
+  }
+}
+
+class Scope {
+  constructor(type, opt_parent) {
+    this.type = type;
+    this.parent = opt_parent || null;
+    /** @type {!Map<!Declaration>} */
+    this.decls = new Map();
   }
 
-  /** @param {TranslationUnit} u */
-  function compile(u) {
-//    console.log(u);
+  /** @param {!Declaration} decl */
+  declare(decl) {
+    this.decls.set(decl.id, decl);
   }
 
-  compile(getFakeTU());
-})();
+  /**
+   * @param {string} identifier
+   * @param {boolean} recursive
+   * @return {boolean}
+   */
+  has(identifier, recursive) {
+    if (this.decls.has(identifier))
+      return true;
+    if (recursive && this.parent)
+      return this.parent.has(identifier, recursive);
+  }
+
+  /**
+   * @param {string} identifier
+   * @param {boolean} recursive
+   * @return {?{scope: !Scope, decl: !DeclarationStatement}}
+   */
+  find(identifier, recursive) {
+    if (this.decls.has(identifier))
+      return {scope: this, decl: this.decls.get(identifier)};
+    if (recursive && this.parent)
+      return this.parent.find(identifier, true);
+    return null;
+  }
+}
+
+
+
+
+function compile(statements) {
+  // Start with three simple tasks:
+  // 1. Build up the table of declarations (objects) as we go.
+  let globalScope = new Scope();
+  let scope = globalScope;
+
+  // 2. Create an address model for the translation unit.
+  let curAddr = 0;
+
+  // 3. Create a list of instructions to execute (output).
+  let instrs = [];
+
+  for (let statement of statements) {
+    if (statement instanceof DeclarationStatement) {
+      let id = statement.declarator.identifier;
+      let storageClass = undefined;
+      let type = undefined;
+      for (let specifier of statement.specifiers) {
+        if (specifier == StorageClass.STATIC ||
+            specifier == StorageClass.EXTERN) {
+          assert(!storageClass,
+                 `Multiple storage classes in declaration of ${id}`);
+          storageClass = specifier;
+        } else if (specifier instanceof Type) {
+          assert(!type, `Multiple types in declaration of ${id}`);
+          type = specifier;
+        }
+      }
+      assert(type, `Type specifier not found in declaration of ${id}`);
+
+      let prevDecl = scope.find(id, false);
+      assert(!prevDecl || !prevDecl.decl.initializer,
+             `Declaration of ${id} after initialization`);
+      let decl = new Declaration(id, type, storageClass);
+      if (statement.declarator.initializer) {
+        assert(storageClass != StorageClass.EXTERN,
+               `Definition of extern ${id}`);
+        decl.initializer = statement.declarator.initializer;
+        // ...
+      }
+      scope.declare(decl);
+    }
+  }
+  return globalScope;
+}
 
 
 /*
