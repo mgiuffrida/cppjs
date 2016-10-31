@@ -1,5 +1,5 @@
 let machine = require('../machine');
-let expect = require('../chai/chai').expect;
+let expect = require('../bower_components/chai/chai').expect;
 
 let m = machine.machine;
 
