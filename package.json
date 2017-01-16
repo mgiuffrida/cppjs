@@ -1,14 +1,14 @@
 {
   "name": "cppjs",
   "version": "0.0.1",
-  "directories": {
-    "test": "test"
+  "dependencies": {},
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.1.2"
   },
-  "dependencies": {
-    "mocha": "^3.1.2",
-    "mocha-cli": "^1.0.1"
+  "scripts": {
+    "mocha": "mocha"
   },
-  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mgiuffrida/cppjs.git"

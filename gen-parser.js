@@ -1,4 +1,69 @@
-// Outdated: see working copy in gen-parser.js
+'use strict';
+
+global.provide && provide('gen-parser');
+
+/*
+ * Sample usage:
+ *
+ * var gen_parser = require('gen-parser');
+ * var parser = gen_parser.genParser();
+ * parser.parse('int i;');
+ */
+(function() {
+
+let assert = require('assert');
+let lex = require('./lexical-types');
+let types = require('./types');
+let peg = global['peg'];
+if (!peg)
+  peg = require('pegjs');
+
+let dependencyPrefix = typeof window == 'undefined' ? '../../../../' : './';
+let dependencies = {
+  types: dependencyPrefix + 'types',
+  lex: dependencyPrefix + 'lexical-types',
+};
+
+function genParser() {
+  try {
+    return peg.generate(grammar, {
+      format: 'commonjs',
+      dependencies: dependencies
+    });
+  } catch (e) {
+    console.error('Exception generating parser');
+    throw e;
+  }
+}
+
+function parse(input) {
+  let parser = genParser();
+  try {
+    return parser.parse(input);
+  } catch (e) {
+    if (e.name == 'SyntaxError') {
+      console.error(e.name + ': ' + e.message);
+      let sourceLines = input.split('\n');
+      let indicator = '';
+      for (let i = 0; i < e.location.start.offset; i++)
+        indicator += ' ';
+      for (let i = e.location.start.offset; i <= e.location.end.offset; i++)
+        indicator += '^';
+      sourceLines.splice(e.location.end.line, 0, indicator);
+      console.error(sourceLines.join('\n'));
+      window.e = e;
+    }
+    throw e;
+  }
+}
+
+module.exports = {
+  genParser: genParser,
+  parse: parse,
+};
+
+let grammar = String.raw`
+
 // Reference: N3776
 
 {
@@ -80,7 +145,7 @@ BooleanLiteral
   / FalseToken { return new lex.Literal(types.BooleanType.BOOL, false); }
 
 IntegerLiteral
-  = Digit+ { return new lex.Literal(types.IntegralType.INT, text());
+  = Digit+ { return new lex.Literal(types.IntegralType.INT, text()); }
 
 Digit
   = [0-9]
