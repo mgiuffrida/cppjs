@@ -1,0 +1,32 @@
+<!doctype html>
+<head>
+  <script src="in-browser.js"></script>
+  <script src="assert.js"></script>
+  <script src="lexical-types.js"></script>
+  <script src="types.js"></script>
+  <script src="program.js"></script>
+  <script src="parser.js"></script>
+  <script src="compile.js"></script>
+  <script src="interactive.js"></script>
+  <style>
+    #outer {
+      display: flex;
+    }
+
+    textarea {
+      width: 536px;
+      height: 300px;
+      margin-right: 10px;
+    }
+
+    #output, #source {
+      font: 12px Consolas;
+    }
+  </style>
+</head>
+<body>
+  <div id="outer">
+    <textarea id="source"></textarea>
+    <pre id="output"></pre>
+  </div>
+</body>

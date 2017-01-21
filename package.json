@@ -1,7 +1,9 @@
 {
-  "name": "cppjs",
+  "name": "jscpp",
   "version": "0.0.1",
-  "dependencies": {},
+  "dependencies": {
+    "jison": "^0.4.17"
+  },
   "devDependencies": {
     "chai": "^3.5.0",
     "mocha": "^3.1.2"
@@ -11,12 +13,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mgiuffrida/cppjs.git"
+    "url": "git+https://github.com/mgiuffrida/jscpp.git"
   },
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mgiuffrida/cppjs/issues"
+    "url": "https://github.com/mgiuffrida/jscpp/issues"
   },
-  "homepage": "https://github.com/mgiuffrida/cppjs#readme"
+  "homepage": "https://github.com/mgiuffrida/jscpp#readme"
 }

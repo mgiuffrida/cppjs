@@ -8,6 +8,10 @@ module.exports = function() {
       this.name = name;
       this.size = size;
     }
+
+    toString() {
+      return this.name;
+    }
   }
 
   class VoidType extends Type {
@@ -41,6 +45,9 @@ module.exports = function() {
 
   VoidType.VOID = new VoidType;
   BooleanType.BOOL = new BooleanType('bool', 1);
+  IntegralType.CHAR = new IntegralType('char', 1);
+  IntegralType.CHAR16_T = new IntegralType('char16_t', 2);
+  IntegralType.CHAR32_T = new IntegralType('char32_t', 4);
   IntegralType.INT = new IntegralType('int', 4);
   IntegralType.SHORT = new IntegralType('short', 2);
   IntegralType.LONG = new IntegralType('long', 4);

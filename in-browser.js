@@ -20,7 +20,7 @@ let global = this;
  */
 var provide;
 
-/** @type {function(string): ?} */
+/** @type {(function(string): ?|undefined)} */
 let require;
 
 /** @type {!Object} */
