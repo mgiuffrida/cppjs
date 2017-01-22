@@ -1,11 +1,7 @@
-global.provide && provide('vm');
-
-let vm = {};
-/** @typedef {number} */
-vm.Address;
-
-(function() {
 'use strict';
+
+/** @typedef {number} */
+var Address;
 
 // Machine specifics:
 // Endianness is platform specific due to JS typed array implementation.
@@ -13,7 +9,6 @@ vm.Address;
 // ...
 // See 1.9 Program execution for more.
 
-/** @type {module.Assert} */
 let assert = require('assert');
 
 // Use fixed-length memory for now.
@@ -24,6 +19,7 @@ let MEM = new ArrayBuffer(4096);
  * @param {number} size Size in bytes.
  * @param {boolean} signed
  * @return {!Function} Class of the typed array.  */
+/** @suppress {missingReturn} */
 function getArrayType(size, signed) {
   switch (size) {
     case 1:
@@ -33,7 +29,7 @@ function getArrayType(size, signed) {
     case 4:
       return signed ? Int32Array : Uint32Array;
     default:
-      return assert(false, `Invalid size ${size} specified`);
+      assert(false, `Invalid size ${size} specified`);
   }
 }
 
@@ -41,7 +37,7 @@ function getArrayType(size, signed) {
 
 /**
  * @param {number} value
- * @param {vm.Address} to
+ * @param {Address} to
  * @param {number} size
  * @param {boolean} signed
  */
@@ -52,7 +48,7 @@ function store(value, to, size, signed) {
 }
 
 /**
- * @param {vm.Address} from
+ * @param {Address} from
  * @param {number} size
  * @param {boolean} signed
  * @return {number}
@@ -64,8 +60,8 @@ function read(from, size, signed) {
 }
 
 /**
- * @param {vm.Address} from
- * @param {vm.Address} to
+ * @param {Address} from
+ * @param {Address} to
  * @param {number} size
  * @param {boolean} signed
  */
@@ -81,4 +77,3 @@ module.exports = {
   read: read,
   load: load,
 };
-})();

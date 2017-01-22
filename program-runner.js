@@ -1,7 +1,5 @@
 'use strict';
 
-global.provide && provide('program-runner');
-
 var types = require('./types');
 var Program = require('./program');
 var vm = require('./vm');

@@ -1,4 +1,4 @@
-JS = in-browser.js vm.js
+JS = assert.js types.js lexical-types.js vm.js program.js compile.js interactive.js
 
 # TODO: deal with all these shift/reduce warnings.
 parser.js: cpp.jison cpp.jisonlex
@@ -10,7 +10,11 @@ closure: $(JS)
 	closure_compiler $(JS) \
 	--language_in ECMASCRIPT6_STRICT \
 	--language_out ECMASCRIPT5_STRICT \
-	--warning_level VERBOSE --checks-only
+	--process_common_js_modules \
+	--common_js_entry_module=lexical-types \
+	--externs externs.js \
+	--warning_level VERBOSE \
+	--js_output_file compiled.js
 
 .PHONY: test
 test:

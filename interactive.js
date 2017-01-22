@@ -1,24 +1,32 @@
 'use strict';
 
 window.addEventListener('DOMContentLoaded', function() {
+  const assert = require('./assert');
   assert(parser);
-  var lex = require('./lexical-types');
-  var types = require('./types');
+  let lex = require('./lexical-types');
+  let types = require('./types');
+  let compile = require('./compile');
   parser.yy = lex;
   parser.yy.types = types;
 
-  var textarea = document.querySelector('#source');
-  var output = document.querySelector('#output');
+  let textarea = document.querySelector('#source');
+  let output = document.querySelector('#output');
   textarea.focus();
   textarea.addEventListener('input', function() {
     try {
-      var parsed = parser.parse(textarea.value);
-      var s = '';
-      for (var statement of parsed) {
+      let parsed = parser.parse(textarea.value);
+      let s = '';
+      for (let statement of parsed) {
         s += statement.constructor.name + '\n';
         s += statement.toString().split('\n').map(s => '  ' + s).join('\n') + '\n\n';
       }
       output.textContent = s;
+
+      try {
+        console.log(compile.compile(parsed));
+      } catch (e) {
+        output.textContent += 'Compile error:\n' + e.message;
+      }
     } catch (e) {console.log(e);}
   });
 });

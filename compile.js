@@ -1,45 +1,49 @@
 'use strict';
 
-global.provide && provide('compile');
-
-module.exports = function() {
-
 var assert = require('assert');
-var types = require('./types');
-var lex = require('./lexical-types');
-var Program = require('./program');
+const types = require('./types');
+const lex = require('./lexical-types');
+var program = require('./program');
+
+let prog = new program.Program();
 
 // Implementation-defined parameters:
 let SIZEOF_INT = 4;
 
 // program types
 
+/** @param {./types.Type} type */
+function foo(type) { console.log(type); }
+
 // should this be "object"?
 class Declaration {
   /**
    * @param {!string} id
-   * @param {!types.Type} type
-   * @param {!lex.StorageClass=} opt_storageClass
+   * @param {./types.Type} type
+   * @param {!./lexical-types.StorageClass=} opt_storageClass
    */
   constructor(id, type, opt_storageClass) {
     this.id = id;
     this.type = type;
     this.storageClass =
         (opt_storageClass === undefined ? undefined : opt_storageClass);
+    this.globalAddress = undefined;
   }
 }
 
 class Scope {
-  constructor(type, opt_parent) {
-    this.type = type;
+  /**
+   * @param {!Scope=} opt_parent
+   */
+  constructor(opt_parent) {
     this.parent = opt_parent || null;
-    /** @type {!Map<!Declaration>} */
-    this.decls = new Map();
+    /** @type {!Map<string, !Declaration>} */
+    this.declarations = new Map();
   }
 
-  /** @param {!Declaration} decl */
-  declare(decl) {
-    this.decls.set(decl.id, decl);
+  /** @param {!Declaration} declaration */
+  declare(declaration) {
+    this.declarations.set(declaration.id, declaration);
   }
 
   /**
@@ -48,20 +52,23 @@ class Scope {
    * @return {boolean}
    */
   has(identifier, recursive) {
-    if (this.decls.has(identifier))
+    if (this.declarations.has(identifier))
       return true;
     if (recursive && this.parent)
       return this.parent.has(identifier, recursive);
+    return false;
   }
 
   /**
    * @param {string} identifier
    * @param {boolean} recursive
-   * @return {?{scope: !Scope, decl: !DeclarationStatement}}
+   * @return {?{scope: !Scope, declaration: !Declaration}}
    */
   find(identifier, recursive) {
-    if (this.decls.has(identifier))
-      return {scope: this, decl: this.decls.get(identifier)};
+    if (this.declarations.has(identifier))
+      return {
+        scope: this,
+        declaration: /** @type {!Declaration} */(this.declarations.get(identifier))};
     if (recursive && this.parent)
       return this.parent.find(identifier, true);
     return null;
@@ -70,7 +77,7 @@ class Scope {
 
 class BaseSymbol {
   /**
-   * @param {!UnqualifiedId} id
+   * @param {!./lexical-types.UnqualifiedId} id
    */
   constructor(id) {
     this.id = id;
@@ -80,8 +87,8 @@ class BaseSymbol {
 // just static variables?
 class DataSymbol extends BaseSymbol {
   /**
-   * @param {!UnqualifiedId} id
-   * @param {!types.Type} type
+   * @param {!./lexical-types.UnqualifiedId} id
+   * @param {!./types.Type} type
    */
   constructor(id, type) {
     super(id);
@@ -90,20 +97,22 @@ class DataSymbol extends BaseSymbol {
 }
 
 class FunctionSymbol extends BaseSymbol {
-  /**
-   * @param {string} id
-   * @param {!types.Type} returnType
-   * @param {!Array{string, !types.Type}} parameters
+  /* TODO
+   * param {string} id
+   * param {!./types.Type} returnType
+   * param {!Array{string, !./types.Type}} parameters
    */
   constructor(id, returnType, parameters) {
     super(id);
-    this.returnType = type;
+    this.returnType = returnType;
   }
 }
 
+/**
+ * @param {!Array<!./lexical-types.Statement>} statements
+ * @return {!Scope}
+ */
 function compile(statements) {
-
-
   // Start with three simple tasks:
   // 1. Build up the table of declarations (objects) as we go.
   let globalScope = new Scope();
@@ -113,8 +122,8 @@ function compile(statements) {
   // function declarations here to "run"?)
   let curStackPtr = 0;
 
-
   // 3. Create a list of instructions to execute (output).
+  /** @type {!Array<string>} */
   let instrs = [];
 
   for (let statement of statements) {
@@ -135,10 +144,15 @@ function compile(statements) {
       }
       assert(type, `Type specifier not found in declaration of ${id}`);
 
-      let prevDecl = scope.find(id, false);
-      assert(!prevDecl || !prevDecl.decl.initializer,
+      let prevDeclaration = scope.find(id, false);
+      assert(!prevDeclaration, `Redefinition of ${id}`);
+
+      /* TODO: ???
+      assert(!prevDeclaration || !prevDeclaration.declaration.initializer,
              `Declaration of ${id} after initialization`);
-      let decl = new Declaration(id, type, storageClass);
+             */
+
+      let declaration = new Declaration(id, type, storageClass);
       // Add the declarator to the stack offset. (Should work on functions
       // first.)
 
@@ -151,6 +165,13 @@ function compile(statements) {
         // address", so later uses of it resolve to that object
         // append an instruction to initialize the object in memory at its
         // known address
+        if (storageClass == lex.StorageClass.STATIC) {
+          // Globally, this object lives at |address|.
+          declaration.globalAddress = prog.addStaticObject(type, false);
+          //if (statement.declarator.initializer) {
+          //}
+        }
+
         //
         // for auto:
         // say "in this scope, this named variable refers to this object, which
@@ -164,15 +185,13 @@ function compile(statements) {
         // Generate instructions to evaluate the expression and store its result
         // at the declarator's stack offset.
       }
-      scope.declare(decl);
+      scope.declare(declaration);
     }
   }
   return globalScope;
 }
 
 // TODO: define interface.
-return {
+module.exports = {
   compile: compile,
 };
-
-}();
