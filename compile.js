@@ -1,14 +1,14 @@
 'use strict';
 
-var assert = require('assert');
+const assert = require('./assert');
 const types = require('./types');
-const lex = require('./lexical-types');
-var program = require('./program');
+const syntax = require('./syntax');
+const program = require('./program');
 
 let prog = new program.Program();
 
 // Implementation-defined parameters:
-let SIZEOF_INT = 4;
+const SIZEOF_INT = 4;
 
 // program types
 
@@ -20,7 +20,7 @@ class Declaration {
   /**
    * @param {!string} id
    * @param {./types.Type} type
-   * @param {!./lexical-types.StorageClass=} opt_storageClass
+   * @param {!./syntax.StorageClass=} opt_storageClass
    */
   constructor(id, type, opt_storageClass) {
     this.id = id;
@@ -77,7 +77,7 @@ class Scope {
 
 class BaseSymbol {
   /**
-   * @param {!./lexical-types.UnqualifiedId} id
+   * @param {!./syntax.UnqualifiedId} id
    */
   constructor(id) {
     this.id = id;
@@ -87,7 +87,7 @@ class BaseSymbol {
 // just static variables?
 class DataSymbol extends BaseSymbol {
   /**
-   * @param {!./lexical-types.UnqualifiedId} id
+   * @param {!./syntax.UnqualifiedId} id
    * @param {!./types.Type} type
    */
   constructor(id, type) {
@@ -109,7 +109,7 @@ class FunctionSymbol extends BaseSymbol {
 }
 
 /**
- * @param {!Array<!./lexical-types.Statement>} statements
+ * @param {!Array<!./syntax.Statement>} statements
  * @return {!Scope}
  */
 function compile(statements) {
@@ -127,13 +127,14 @@ function compile(statements) {
   let instrs = [];
 
   for (let statement of statements) {
-    if (statement instanceof lex.DeclarationStatement) {
+    if (statement instanceof syntax.DeclarationStatement) {
       let id = statement.declarator.identifier;
       let storageClass = undefined;
-      let type = undefined;
+      /** @type {!./types.Type} */
+      let type;
       for (let specifier of statement.specifiers) {
-        if (specifier == lex.StorageClass.STATIC ||
-            specifier == lex.StorageClass.EXTERN) {
+        if (specifier == syntax.StorageClass.STATIC ||
+            specifier == syntax.StorageClass.EXTERN) {
           assert(!storageClass,
                  `Multiple storage classes in declaration of ${id}`);
           storageClass = specifier;
@@ -157,7 +158,7 @@ function compile(statements) {
       // first.)
 
       if (statement.declarator.initializer) {
-        assert(storageClass != lex.StorageClass.EXTERN,
+        assert(storageClass != syntax.StorageClass.EXTERN,
                `Definition of extern ${id}`);
         // ...
         // for static:
@@ -165,7 +166,7 @@ function compile(statements) {
         // address", so later uses of it resolve to that object
         // append an instruction to initialize the object in memory at its
         // known address
-        if (storageClass == lex.StorageClass.STATIC) {
+        if (storageClass == syntax.StorageClass.STATIC) {
           // Globally, this object lives at |address|.
           declaration.globalAddress = prog.addStaticObject(type, false);
           //if (statement.declarator.initializer) {

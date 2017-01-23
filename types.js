@@ -1,19 +1,46 @@
 'use strict';
 
 class Type {
+  /**
+   * @param {string} name
+   * @param {number} size Width of the type, in bytes.
+   */
   constructor(name, size) {
     this.name = name;
     this.size = size;
   }
 
+  /** @override */
   toString() {
     return this.name;
+  }
+
+  /** @return {!Function} */
+  getArrayType() {
+    return Uint8Array;
+  }
+
+  /**
+   * @param {number|boolean} value
+   * @return {!TypedArray}
+   */
+  toBytes(value) {
+    let arrayType = this.getArrayType();
+    // Creates a buffer of size 1 * arrayType.BYTES_PER_ELEMENT.
+    let typedArray = new arrayType(1);
+    typedArray[0] = value;
+    return typedArray;
   }
 }
 
 class VoidType extends Type {
   constructor() {
     super('void', 0);
+  }
+
+  /** @override */
+  toBytes(value) {
+    throw new Error('VoidType cannot have a value');
   }
 }
 
@@ -25,19 +52,51 @@ class BooleanType extends Type {
   constructor(name, size) {
     super(name, size);
   }
+
+  /** @override */
+  getArrayType() {
+    return Uint8Array;
+  }
+
+  toBytes(value) {
+    if (typeof value != 'boolean')
+      throw new Error('Cannot convert type ' + typeof value + ' to Boolean');
+    return super.toBytes(value);
+  }
 }
 
 class IntegralType extends Type {
   /**
    * @param {string} name
    * @param {number} size Width of the type, in bytes.
+   * TODO: signed integers.
    */
   constructor(name, size) {
     super(name, size);
   }
 
-  // TODO: Specializations for different sizes and signedness.
-  // TODO: Range validation and type detection.
+  /** @override */
+  getArrayType() {
+    switch (this.size) {
+      case 1:
+        return Uint8Array;
+      case 2:
+        return Uint16Array;
+      case 4:
+        return Uint32Array;
+      default:
+        throw new Error(`Unsupported size: ${this.size}`);
+    }
+  }
+
+  toBytes(value) {
+    let maxValue = Math.pow(2, 8 * this.size) - 1;
+    if (value > maxValue) {
+      throw new Error(
+          `Cannot convert ${value} to integer (max value ${maxValue})`);
+    }
+    return super.toBytes(value);
+  }
 }
 
 VoidType.VOID = new VoidType;
@@ -56,9 +115,3 @@ module.exports = {
   BooleanType: BooleanType,
   IntegralType: IntegralType,
 };
-
-// Closure typedefs.
-/** @typedef {Type} */ module.exports.Type;
-/** @typedef {VoidType} */ module.exports.VoidType;
-/** @typedef {BooleanType} */ module.exports.BooleanType;
-/** @typedef {IntegralType} */ module.exports.IntegralType;

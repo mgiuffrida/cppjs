@@ -1,10 +1,34 @@
 'use strict';
 
-let assert = require('assert');
+const assert = require('./assert');
 
 /** @enum {string} */
-let Keyword = {
+/**
+ * https://github.com/google/closure-compiler/issues/2135
+ * @suppress {newCheckTypes}
+ */
+const Keyword = {
   THIS: 'this',
+};
+
+/** @enum {number} */
+/** @suppress {newCheckTypes} */
+const StorageClass = {
+  STATIC: 'static',
+  EXTERN: 'extern',
+};
+
+/** @enum {string} */
+/** @suppress {newCheckTypes} */
+const StorageDuration = {
+  AUTOMATIC: 'automatic',
+};
+
+/** @enum {string} */
+/** @suppress {newCheckTypes} */
+const CV = {
+  CONST: 'const',
+  VOLATILE: 'volatile',
 };
 
 function indent(s) {
@@ -240,30 +264,13 @@ class FunctionCall extends Expression {
 // memory location: an object of scalar type, or a maximal sequence of adjacent
 // bit-fields
 
-/** @enum {string} */
-let StorageDuration = {
-  AUTOMATIC: 'automatic',
-};
-
-/** @enum {string} */
-let StorageClass = {
-  STATIC: 'static',
-  EXTERN: 'extern',
-};
-
-/** @enum {string} */
-let CV = {
-  CONST: 'const',
-  VOLATILE: 'volatile',
-};
-
 // An object, a region of storage. Possible result of an expression.
 /*
  * null means it doesn't have that property
  * undefined means we don't know/haven't decided that property yet
  * typedef {{
  *   name: ?string,
- *   storageDuration: !StorageDuration,
+ *   storageDuration: !ns.StorageDuration,
  *   type: !Type,
  *   subobjects: ?Array<object>,
  *   parent_object: ?object,
@@ -341,8 +348,6 @@ So like, given "= assignment-expression", my lexer just needs to return
 something that can satisfy that definition; it might just be a
 PrimaryExpression. The result would *lexically* flow up through to the full
 statement itself.
-
-So I need to get started on the damn lexer.
 */
 
 class Condition {
@@ -502,7 +507,6 @@ class FunctionDeclaration {
   }
 }
 
-
 module.exports = {
   Keyword: Keyword,
   StorageDuration: StorageDuration,
@@ -554,39 +558,3 @@ module.exports = {
     },
   },
 };
-
-// Closure typedefs.
-/** @typedef {Keyword} */ module.exports.Keyword;
-/** @typedef {StorageDuration} */ module.exports.StorageDuration;
-/** @typedef {StorageClass} */ module.exports.StorageClass;
-/** @typedef {CV} */ module.exports.CV;
-/** @typedef {anyvalue} */ module.exports.anyvalue;
-/** @typedef {lvalue} */ module.exports.lvalue;
-/** @typedef {xvalue} */ module.exports.xvalue;
-/** @typedef {prvalue} */ module.exports.prvalue;
-/** @typedef {Literal} */ module.exports.Literal;
-/** @typedef {Expression} */ module.exports.Expression;
-/** @typedef {ParenExpression} */ module.exports.ParenExpression;
-/** @typedef {Identifier} */ module.exports.Identifier;
-/** @typedef {UnqualifiedId} */ module.exports.UnqualifiedId;
-/** @typedef {Constant} */ module.exports.Constant;
-/** @typedef {IdExpression} */ module.exports.IdExpression;
-/** @typedef {PrimaryExpression} */ module.exports.PrimaryExpression;
-/** @typedef {AssignmentExpression} */ module.exports.AssignmentExpression;
-/** @typedef {BinaryExpression} */ module.exports.BinaryExpression;
-/** @typedef {OrExpression} */ module.exports.OrExpression;
-/** @typedef {AndExpression} */ module.exports.AndExpression;
-/** @typedef {FunctionCall} */ module.exports.FunctionCall;
-/** @typedef {Condition} */ module.exports.Condition;
-/** @typedef {Statement} */ module.exports.Statement;
-/** @typedef {ExpressionStatement} */ module.exports.ExpressionStatement;
-/** @typedef {SelectionStatement} */ module.exports.SelectionStatement;
-/** @typedef {IfStatement} */ module.exports.IfStatement;
-/** @typedef {IterationStatement} */ module.exports.IterationStatement;
-/** @typedef {WhileIterationStatement} */ module.exports.WhileIterationStatement;
-/** @typedef {DeclarationStatement} */ module.exports.DeclarationStatement;
-/** @typedef {Initializer} */ module.exports.Initializer;
-/** @typedef {Declarator} */ module.exports.Declarator;
-/** @typedef {Parameter} */ module.exports.Parameter;
-/** @typedef {ReturnStatement} */ module.exports.ReturnStatement;
-/** @typedef {FunctionDeclaration} */ module.exports.FunctionDeclaration;

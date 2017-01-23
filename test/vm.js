@@ -1,6 +1,8 @@
-let expect = require('chai').expect;
+'use strict';
 
-let vm = require('../vm');
+const expect = require('chai').expect;
+
+const vm = require('../vm');
 
 describe('machine', function() {
   it('reads and writes', function() {

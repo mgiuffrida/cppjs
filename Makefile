@@ -1,4 +1,4 @@
-JS = assert.js types.js lexical-types.js vm.js program.js compile.js interactive.js
+JS = assert.js types.js syntax.js vm.js program.js compile.js interactive.js
 
 # TODO: deal with all these shift/reduce warnings.
 parser.js: cpp.jison cpp.jisonlex
@@ -7,13 +7,15 @@ parser.js: cpp.jison cpp.jisonlex
 	> /dev/null
 
 closure: $(JS)
-	closure_compiler $(JS) \
+	java -jar ./node_modules/google-closure-compiler/compiler.jar $(JS) \
 	--language_in ECMASCRIPT6_STRICT \
 	--language_out ECMASCRIPT5_STRICT \
 	--process_common_js_modules \
-	--common_js_entry_module=lexical-types \
+	--common_js_entry_module=interactive.js \
 	--externs externs.js \
+	--new_type_inf \
 	--warning_level VERBOSE \
+	--create_source_map compiled-map \
 	--js_output_file compiled.js
 
 .PHONY: test

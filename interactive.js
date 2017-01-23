@@ -3,9 +3,9 @@
 window.addEventListener('DOMContentLoaded', function() {
   const assert = require('./assert');
   assert(parser);
-  let lex = require('./lexical-types');
-  let types = require('./types');
-  let compile = require('./compile');
+  const lex = require('./syntax');
+  const types = require('./types');
+  const compile = require('./compile');
   parser.yy = lex;
   parser.yy.types = types;
 

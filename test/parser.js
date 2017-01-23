@@ -1,11 +1,11 @@
 'use strict';
 
-let expect = require('chai').expect;
-let types = require('../types');
-let lex = require('../lexical-types');
+const expect = require('chai').expect;
+const types = require('../types');
+const syntax = require('../syntax');
 
-let parser = require('../parser').parser;
-parser.yy = lex;
+const parser = require('../parser').parser;
+parser.yy = syntax;
 parser.yy.types = types;
 
 describe('parser', function() {
@@ -68,26 +68,26 @@ describe('parser', function() {
   it('parses simple statements', function() {
     let result = parser.parse('int i;');
     expect(result).length(1);
-    expect(result[0]).instanceof(lex.DeclarationStatement);
+    expect(result[0]).instanceof(syntax.DeclarationStatement);
     let specifiers = result[0].specifiers;
     expect(specifiers).instanceof(Array);
     expect(specifiers).length(1);
     expect(specifiers[0]).equals(types.IntegralType.INT);
     let declarator = result[0].declarator;
-    expect(declarator).instanceof(lex.Declarator);
+    expect(declarator).instanceof(syntax.Declarator);
     expect(declarator.identifier.id).equals('i');
     expect(declarator.initializer).is.null;
 
     result = parser.parse('static bool jjj = true;');
     expect(result).length(1);
-    expect(result[0]).instanceof(lex.DeclarationStatement);
+    expect(result[0]).instanceof(syntax.DeclarationStatement);
     specifiers = result[0].specifiers;
     expect(specifiers).instanceof(Array);
     expect(specifiers).length(2);
-    expect(specifiers[0]).equals(lex.StorageClass.STATIC);
+    expect(specifiers[0]).equals(syntax.StorageClass.STATIC);
     expect(specifiers[1]).equals(types.BooleanType.BOOL);
     declarator = result[0].declarator;
-    expect(declarator).instanceof(lex.Declarator);
+    expect(declarator).instanceof(syntax.Declarator);
     expect(declarator.identifier.id).equals('jjj');
     expect(declarator.initializer).is.not.null;
   });

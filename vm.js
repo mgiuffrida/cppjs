@@ -9,7 +9,7 @@ var Address;
 // ...
 // See 1.9 Program execution for more.
 
-let assert = require('assert');
+const assert = require('./assert');
 
 // Use fixed-length memory for now.
 let MEM = new ArrayBuffer(4096);
@@ -18,7 +18,7 @@ let MEM = new ArrayBuffer(4096);
  * Gets the class needed to represent the given type of number.
  * @param {number} size Size in bytes.
  * @param {boolean} signed
- * @return {!Function} Class of the typed array.  */
+ * @return {!function(new:ArrayView, number, number=, number=)} Class of the typed array.  */
 /** @suppress {missingReturn} */
 function getArrayType(size, signed) {
   switch (size) {
@@ -30,6 +30,7 @@ function getArrayType(size, signed) {
       return signed ? Int32Array : Uint32Array;
     default:
       assert(false, `Invalid size ${size} specified`);
+      return Uint8Array;
   }
 }
 

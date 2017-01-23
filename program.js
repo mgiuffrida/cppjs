@@ -1,70 +1,54 @@
 'use strict';
 
-/* todo {number} MemoryLocation */
+const types = require('./types');
+const assert = require('./assert');
 
-var types = require('./types');
-
-/** Wrapper for VM commands possibly pointing to symbols. */
-class ProgramCommand {
-}
-
-/* TODO
- * param {number} value
- * param {./vm.Address} to
- * param {number} size
- * param {boolean} signed
-ProgramCommand.Store = class Store extends ProgramCommand {
-  constructor() {
-    super();
-  }
-}
-*/
-
-// A Program is the compiled "output" of a source file. It maintains data
-// blocks, an external symbol table and an internal symbol table.
+// A Program is the compiled "output" of a source file. It stores information
+// about data blocks, an external symbol table and an internal symbol table.
 class Program {
   constructor() {
-    /** @private {number} Size of the static data block. */
-    this.dataSize_ = 0;
+    /** @private {number} Size of the memory used for static variables. */
+    this.staticDataSize_ = 0;
 
-    /** @private {number} Size of 0-initialized static bss block. */
-    this.bssSize_ = 0;
-
-    this.symbols = new Map();
-
-    /** @type {!Array<ProgramCommand>} */
-    this.commands = [];
+    /**
+     * @type {!ArrayBuffer} Bytes of static data.
+     *     Starts with length 256 (bytes); when necessary, is replaced by a new
+     *     ArrayBuffer of twice its size.
+     */
+    this.staticDataBytes = new ArrayBuffer(4096);
   }
 
-  get bssSize() {
-    return this.bssSize_;
-  }
-
-  get dataSize() {
-    return this.dataSize_;
+  get staticDataSize() {
+    return this.staticDataSize_;
   }
 
   /**
-   * Adds a static object at compile time to the data or bss block. This returns
-   * its address, and (TODO) possibly adds it to the global symbol table.
+   * Adds a static object at compile time. This returns its address, and (TODO)
+   * possibly adds it to the global symbol table.
    * @param {!./types.Type} type
-   * @param {boolean} zeroInitialized
+   * @param {number|boolean} value
    * @return {number} Location of allocated object in its static data block.
    */
-  addStaticObject(type, zeroInitialized) {
-    let curPtr;
-    if (zeroInitialized) {
-      curPtr = this.bssSize_;
-      this.bssSize_ += type.size; // TODO: Alignment.
-    } else {
-      curPtr = this.dataSize_;
-      this.dataSize_ += type.size;
-    }
-    return curPtr;
+  addStaticObject(type, value) {
+    let start = this.staticDataSize_;
+    // If necessary, increment |start| to the next multiple of the size.
+    if (start % type.size != 0)
+      start += type.size - start % type.size;
+    this.staticDataSize_ = start + type.size;
+
+    // TODO: grow buffer.
+    assert(this.staticDataSize_ < this.staticDataBytes.byteLength);
+
+    // Create a view of the bytes we're setting, then set them from the value's
+    // bytes.
+    let arrayType = type.getArrayType();
+    let typedArray = type.toBytes(value);
+    let view = new arrayType(this.staticDataBytes, start, 1);
+    view[0] = typedArray[0];
+    return start;
   }
 }
 
 module.exports = {
   Program: Program,
-  ProgramCommand: ProgramCommand,
 };

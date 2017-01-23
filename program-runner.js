@@ -1,8 +1,8 @@
 'use strict';
 
-var types = require('./types');
-var Program = require('./program');
-var vm = require('./vm');
+const types = require('./types');
+const Program = require('./program');
+const vm = require('./vm');
 
 class ProgramRunner {
   /** @param {!Program} */
