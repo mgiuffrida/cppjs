@@ -12,9 +12,6 @@ const SIZEOF_INT = 4;
 
 // program types
 
-/** @param {./types.Type} type */
-function foo(type) { console.log(type); }
-
 // should this be "object"?
 class Declaration {
   /**

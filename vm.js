@@ -18,8 +18,8 @@ let MEM = new ArrayBuffer(4096);
  * Gets the class needed to represent the given type of number.
  * @param {number} size Size in bytes.
  * @param {boolean} signed
- * @return {!function(new:ArrayView, number, number=, number=)} Class of the typed array.  */
-/** @suppress {missingReturn} */
+ * @return {!function(new:TypedArray, !ArrayBuffer, number=, number=)} Class of the typed array.
+ */
 function getArrayType(size, signed) {
   switch (size) {
     case 1:

@@ -2,7 +2,7 @@
   "name": "jscpp",
   "version": "0.0.1",
   "dependencies": {
-    "google-closure-compiler-js": "^20161201.0.1",
+    "google-closure-compiler": "^20161201.0.0",
     "jison": "^0.4.17"
   },
   "devDependencies": {
